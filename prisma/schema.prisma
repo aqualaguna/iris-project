@@ -1,0 +1,241 @@
+model User {
+  id           String    @id @unique @default(cuid())
+  email        String    @unique
+  first_name   String
+  last_name    String?
+  password     String
+  birth_date   DateTime?
+  created_at   DateTime? @default(now())
+  updated_at   DateTime? @default(now()) @updatedAt
+  phone_number String?
+  subscribed   Boolean?  @default(false)
+  verified_at  DateTime?
+  type         UserType  @default(NEW_USER)
+  gender       gender    @default(RATHER_NOT_SAY)
+  Order        Order[]
+}
+
+model Order {
+  id         String      @id @unique @default(cuid())
+  user       User        @relation(fields: [userId], references: [id])
+  coupon     Coupon?     @relation(fields: [couponId], references: [id])
+  status     OrderStatus @default(NOT_PAID)
+  items      Json[]
+  shipping   Shipping?   @relation(fields: [shippingId], references: [id])
+  address    Address     @relation(fields: [addressId], references: [id])
+  userId     String
+  couponId   String?
+  shippingId String?
+  addressId  String
+}
+
+model Product {
+  id                String              @id @unique @default(cuid())
+  name              String
+  master_sku        String              @unique
+  description       String?
+  short_description String?
+  weight_gram       Int?
+  note              String?
+  created_at        DateTime?           @default(now())
+  updated_at        DateTime?           @default(now()) @updatedAt
+  updated_by        Staff?              @relation(fields: [staffId], references: [id])
+  pictures          String[]
+  thumbnail         String
+  attributes        ProductAttributes[]
+  categories        Category[]
+  staffId           String?
+  ProductVariant    ProductVariant[]
+}
+
+model ProductVariant {
+  id                    String                  @id @unique @default(cuid())
+  variant_name          String
+  product               Product?                @relation(fields: [productId], references: [id])
+  productId             String?
+  ProductVariantOptions ProductVariantOptions[]
+}
+
+model ProductVariantOptions {
+  id                  String             @id @unique @default(cuid())
+  product_variant     ProductVariant     @relation(fields: [productVariantId], references: [id])
+  name                String?
+  productVariantId    String
+  ProductAttributes   ProductAttributes? @relation(fields: [productAttributesId], references: [id])
+  productAttributesId String?
+}
+
+model ProductAttributes {
+  id             String                  @id @unique @default(cuid())
+  sku            String                  @unique
+  variants       ProductVariantOptions[]
+  product        Product                 @relation(fields: [productId], references: [id])
+  regular_price  Float
+  discount_price Float
+  default        Boolean                 @default(false)
+  qty            Int?
+  productId      String
+}
+
+model Staff {
+  id           String    @id @unique @default(cuid())
+  email        String    @unique
+  first_name   String
+  last_name    String?
+  password     String
+  created_at   DateTime? @default(now())
+  updated_at   DateTime? @default(now()) @updatedAt
+  phone_number String?
+  verified_at  DateTime?
+  role         Role
+  Product      Product[]
+  Logs         Logs[]
+}
+
+model Coupon {
+  id                String              @id @unique @default(cuid())
+  type              CouponType
+  quota             Int?
+  start_date        DateTime
+  end_date          DateTime
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @default(now()) @updatedAt
+  Order             Order[]
+  CouponRestriction CouponRestriction[]
+}
+
+model Category {
+  id          String     @id @unique @default(cuid())
+  name        String?
+  description String?
+  parent      Category?  @relation(fields: [categoryId], references: [id])
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @default(now()) @updatedAt
+  Product     Product?   @relation(fields: [productId], references: [id])
+  productId   String?
+  Category    Category[]
+  categoryId  String?
+}
+
+model Notification {
+  id String @id @unique @default(cuid())
+}
+
+model Shipping {
+  id            String         @id @unique @default(cuid())
+  courier_name  String
+  status        ShippingStatus @default(CREATED)
+  logs          String[]
+  tracking_code String
+  Order         Order[]
+}
+
+model Address {
+  id            String   @id @unique @default(cuid())
+  full_address  String
+  country       String
+  province      String
+  district      String
+  postal_code   String?
+  receiver_name String?
+  longitude     Float?
+  latitude      Float?
+  gps_set       Boolean? @default(false)
+  Order         Order[]
+}
+
+model CouponRestriction {
+  id               String          @id @unique @default(cuid())
+  coupon           Coupon          @relation(fields: [couponId], references: [id])
+  type             RestrictionType
+  restriction_data Json
+  couponId         String
+}
+
+model Roles {
+  id         String @id @unique @default(cuid())
+  privileges String
+  role       Role
+}
+
+model Logs {
+  id      String  @id @unique @default(cuid())
+  logs    String?
+  staff   Staff   @relation(fields: [staffId], references: [id])
+  type    LogType
+  type_id String
+  staffId String
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+  MARKETING
+}
+
+enum LogType {
+  PRODUCT
+  CATEGORY
+  ROLES
+  STAFF
+  COUPONS
+  COUPON_RESTRICTION
+  ORDER
+}
+
+enum OrderStatus {
+  NOT_PAID
+  PAID
+  READY_TO_SHIP
+  SHIPPING
+  DELIVERED
+  RETURNED
+  CANCELLED
+}
+
+enum ShippingStatus {
+  PROCESSED
+  RETURN_FINISHED
+  SHIPPING
+  DELIVERED
+  RETURN_PACKAGE
+  VALIDATED
+  REJECTED
+  LOSS
+  CLAIM_INSURANCE
+  CREATED
+}
+
+enum CouponType {
+  SHIPPING
+  PRODUCT
+  ORDER
+  NO_RESTRICTION
+  CASHBACK
+}
+
+enum UserType {
+  NEW_USER
+  NORMAL_USER
+  LOYAL_USER
+  TEST_USER
+}
+
+enum gender {
+  MALE
+  FEMALE
+  RATHER_NOT_SAY
+}
+
+enum RestrictionType {
+  USER_TYPE
+  SUBSCRIBED
+  LOCATION
+  AGE
+  GENDER
+  ORDER_COUNT
+  PRODUCT
+  CATEGORY
+  SHIPPING_COURRIER
+}
